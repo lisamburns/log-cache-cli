@@ -226,8 +226,32 @@ func createLogCacheClient(c HTTPClient, log Logger, cli plugin.CliConnection) *l
 		log.Fatalf("Could not determine Log Cache endpoint: %s", err)
 	}
 
+	ticker := time.NewTicker(10 * time.Second)
+	quit := make(chan struct{})
+	var hacktoken string
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Println("hack - refreshing auth token")
+
+				hacktoken, err = cli.AccessToken()
+				if err != nil {
+					log.Fatalf("Unable to get Access Token: %s", err)
+				}
+				if err != nil {
+					log.Fatalf("Unable to get Access Token: %s", err)
+				}
+			case <-quit:
+				fmt.Println("hack - stopping refreshing")
+				ticker.Stop()
+				return
+			}
+		}
+	}()
 	if strings.ToLower(os.Getenv("LOG_CACHE_SKIP_AUTH")) != "true" {
 		token, err := cli.AccessToken()
+		hacktoken = token
 		if err != nil {
 			log.Fatalf("Unable to get Access Token: %s", err)
 		}
@@ -235,6 +259,7 @@ func createLogCacheClient(c HTTPClient, log Logger, cli plugin.CliConnection) *l
 		c = &tokenHTTPClient{
 			c:           c,
 			accessToken: token,
+			AccessToken: &hacktoken,
 		}
 	}
 

@@ -522,11 +522,12 @@ func (b backoff) OnErr(err error) bool {
 type tokenHTTPClient struct {
 	c           HTTPClient
 	accessToken string
+	AccessToken *string
 }
 
 func (c *tokenHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	if len(c.accessToken) > 0 {
-		req.Header.Set("Authorization", c.accessToken)
+		req.Header.Set("Authorization", *c.AccessToken)
 	}
 
 	return c.c.Do(req)
